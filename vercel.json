@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "backend": {
+      "framework": "other",
+      "buildCommand": "cd backend && npm ci && npx prisma generate && npm run build",
+      "outputDirectory": "backend/dist",
+      "devCommand": "cd backend && npm run dev"
+    },
+    "web": {
+      "framework": "other",
+      "buildCommand": "cd mobile && npx expo export --platform web",
+      "outputDirectory": "mobile/dist"
+    }
+  }
+}

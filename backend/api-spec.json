@@ -1,0 +1,1256 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Phxntom Esports API",
+    "description": "API backend pour la plateforme esports Phxntom. Utilisez ce fichier dans FlutterFlow pour importer tous les endpoints.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Phxntom Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Développement local"
+    },
+    {
+      "url": "https://votre-domaine.com/api",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Santé"],
+        "summary": "Vérifier que le serveur est en ligne",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Serveur OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Créer un compte",
+        "operationId": "register",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "pseudo"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "joueur@email.com" },
+                  "password": { "type": "string", "minLength": 6, "example": "motdepasse123" },
+                  "pseudo": { "type": "string", "example": "MonPseudo" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Compte créé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Se connecter",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "joueur@email.com" },
+                  "password": { "type": "string", "example": "motdepasse123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connecté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Authentification"],
+        "summary": "Récupérer son profil",
+        "operationId": "getMe",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Profil utilisateur",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "tags": ["Profil"],
+        "summary": "Récupérer son profil complet",
+        "operationId": "getProfile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Profil détaillé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profil"],
+        "summary": "Modifier son profil (pseudo, avatar)",
+        "operationId": "updateProfile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pseudo": { "type": "string" },
+                  "avatar": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil modifié",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches": {
+      "get": {
+        "tags": ["Matchs"],
+        "summary": "Lister les matchs disponibles",
+        "operationId": "listMatches",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Liste des matchs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Match" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Matchs"],
+        "summary": "Créer un match",
+        "operationId": "createMatch",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["gameMode"],
+                "properties": {
+                  "gameMode": { "type": "string", "enum": ["KILLRACE", "RESURGENCE", "BATTLE_ROYALE"] },
+                  "maxPlayers": { "type": "integer", "default": 4, "minimum": 2, "maximum": 100 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Match créé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Match" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches/history": {
+      "get": {
+        "tags": ["Matchs"],
+        "summary": "Historique de mes matchs",
+        "operationId": "matchHistory",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Historique des matchs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Match" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches/{id}": {
+      "get": {
+        "tags": ["Matchs"],
+        "summary": "Détails d'un match",
+        "operationId": "getMatch",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détails du match",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Match" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches/{id}/join": {
+      "post": {
+        "tags": ["Matchs"],
+        "summary": "Rejoindre un match",
+        "operationId": "joinMatch",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Match rejoint",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Match" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches/{id}/start": {
+      "post": {
+        "tags": ["Matchs"],
+        "summary": "Démarrer un match (créateur seulement)",
+        "operationId": "startMatch",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Match démarré"
+          }
+        }
+      }
+    },
+    "/matches/{id}/score": {
+      "post": {
+        "tags": ["Matchs"],
+        "summary": "Soumettre son score",
+        "operationId": "submitScore",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["score", "kills", "deaths", "position"],
+                "properties": {
+                  "score": { "type": "integer" },
+                  "kills": { "type": "integer" },
+                  "deaths": { "type": "integer" },
+                  "position": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Score soumis"
+          }
+        }
+      }
+    },
+    "/matches/{id}/results": {
+      "get": {
+        "tags": ["Matchs"],
+        "summary": "Résultats d'un match terminé",
+        "operationId": "matchResults",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Résultats du match"
+          }
+        }
+      }
+    },
+    "/leaderboard/global": {
+      "get": {
+        "tags": ["Classement"],
+        "summary": "Classement global",
+        "operationId": "globalLeaderboard",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Classement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rank": { "type": "integer" },
+                      "userId": { "type": "string" },
+                      "pseudo": { "type": "string" },
+                      "avatar": { "type": "string", "nullable": true },
+                      "rankTitle": { "type": "string" },
+                      "xp": { "type": "integer" },
+                      "wins": { "type": "integer" },
+                      "matchesPlayed": { "type": "integer" },
+                      "winRate": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard/{gameMode}": {
+      "get": {
+        "tags": ["Classement"],
+        "summary": "Classement par mode de jeu",
+        "operationId": "gameModeLeaderboard",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "gameMode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["KILLRACE", "RESURGENCE", "BATTLE_ROYALE"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Classement filtré"
+          }
+        }
+      }
+    },
+    "/accounts": {
+      "get": {
+        "tags": ["Comptes liés"],
+        "summary": "Lister mes comptes de jeu liés",
+        "operationId": "listAccounts",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Comptes liés",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "platform": { "type": "string" },
+                      "gamertag": { "type": "string" },
+                      "platformId": { "type": "string", "nullable": true },
+                      "linkedAt": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/link": {
+      "post": {
+        "tags": ["Comptes liés"],
+        "summary": "Lier un compte manuellement (fallback OAuth)",
+        "operationId": "linkAccount",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["platform", "gamertag"],
+                "properties": {
+                  "platform": {
+                    "type": "string",
+                    "enum": ["PSN", "XBOX", "STEAM", "BATTLE_NET", "ACTIVISION"]
+                  },
+                  "gamertag": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Compte lié"
+          }
+        }
+      }
+    },
+    "/accounts/{id}": {
+      "delete": {
+        "tags": ["Comptes liés"],
+        "summary": "Délier un compte",
+        "operationId": "unlinkAccount",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compte délié"
+          }
+        }
+      }
+    },
+    "/platform-auth/{platform}/start": {
+      "get": {
+        "tags": ["Comptes liés - OAuth"],
+        "summary": "Démarrer le flux OAuth pour une plateforme",
+        "operationId": "oauthStart",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["PSN", "XBOX", "STEAM", "BATTLE_NET", "ACTIVISION"]
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "redirectUri",
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirection vers la page OAuth de la plateforme"
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Lister mes notifications",
+        "operationId": "listNotifications",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "type": { "type": "string" },
+                      "message": { "type": "string" },
+                      "read": { "type": "boolean" },
+                      "createdAt": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "put": {
+        "tags": ["Notifications"],
+        "summary": "Marquer une notification comme lue",
+        "operationId": "markNotificationRead",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marquée lue"
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "put": {
+        "tags": ["Notifications"],
+        "summary": "Marquer toutes les notifications comme lues",
+        "operationId": "markAllNotificationsRead",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Toutes marquées lues"
+          }
+        }
+      }
+    },
+    "/badges": {
+      "get": {
+        "tags": ["Badges"],
+        "summary": "Lister tous les badges et mon statut",
+        "operationId": "listBadges",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Badges"
+          }
+        }
+      }
+    },
+    "/anti-cheat/proof": {
+      "post": {
+        "tags": ["Anti-Cheat"],
+        "summary": "Soumettre une preuve (capture d'écran)",
+        "operationId": "submitProof",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["matchId", "proofUrl"],
+                "properties": {
+                  "matchId": { "type": "string" },
+                  "proofUrl": { "type": "string" },
+                  "notes": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Preuve soumise"
+          }
+        }
+      }
+    },
+    "/anti-cheat/matches/{id}/confirm": {
+      "post": {
+        "tags": ["Anti-Cheat"],
+        "summary": "Confirmer un résultat de match",
+        "operationId": "confirmMatch",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Match confirmé"
+          }
+        }
+      }
+    },
+    "/anti-cheat/report/player": {
+      "post": {
+        "tags": ["Anti-Cheat"],
+        "summary": "Signaler un joueur",
+        "operationId": "reportPlayer",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["targetId", "reason"],
+                "properties": {
+                  "targetId": { "type": "string" },
+                  "reason": { "type": "string" },
+                  "description": { "type": "string" },
+                  "matchId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Signalement envoyé"
+          }
+        }
+      }
+    },
+    "/anti-cheat/report/match": {
+      "post": {
+        "tags": ["Anti-Cheat"],
+        "summary": "Signaler un match suspect",
+        "operationId": "reportMatch",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["matchId", "targetId", "reason"],
+                "properties": {
+                  "matchId": { "type": "string" },
+                  "targetId": { "type": "string" },
+                  "reason": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Signalement envoyé"
+          }
+        }
+      }
+    },
+    "/anti-cheat/verification/{id}": {
+      "get": {
+        "tags": ["Anti-Cheat"],
+        "summary": "Statut de vérification",
+        "operationId": "verificationStatus",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statut"
+          }
+        }
+      }
+    },
+    "/anti-cheat/caps": {
+      "get": {
+        "tags": ["Anti-Cheat"],
+        "summary": "Limites de performance",
+        "operationId": "getPerformanceCaps",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Limites"
+          }
+        }
+      }
+    },
+    "/stats/online": {
+      "get": {
+        "tags": ["Statistiques"],
+        "summary": "Nombre de joueurs connectés (WebSocket)",
+        "operationId": "onlineCount",
+        "responses": {
+          "200": {
+            "description": "Compteur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "online": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats/db": {
+      "get": {
+        "tags": ["Statistiques"],
+        "summary": "Statistiques globales de la DB",
+        "operationId": "dbStats",
+        "responses": {
+          "200": {
+            "description": "Stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": { "type": "integer" },
+                    "matches": { "type": "integer" },
+                    "completedMatches": { "type": "integer" },
+                    "reports": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rewards/gift-cards": {
+      "get": {
+        "tags": ["Récompenses"],
+        "summary": "Cartes cadeaux disponibles",
+        "operationId": "listGiftCards",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Cartes cadeaux"
+          }
+        }
+      }
+    },
+    "/rewards/redeem/{id}": {
+      "post": {
+        "tags": ["Récompenses"],
+        "summary": "Échanger une carte cadeau",
+        "operationId": "redeemGiftCard",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Carte échangée"
+          }
+        }
+      }
+    },
+    "/rewards/history": {
+      "get": {
+        "tags": ["Récompenses"],
+        "summary": "Historique des échanges",
+        "operationId": "redemptionHistory",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Historique"
+          }
+        }
+      }
+    },
+    "/loadouts": {
+      "get": {
+        "tags": ["Loadouts"],
+        "summary": "Tous les loadouts (filtré ?weaponName=, ?category=)",
+        "operationId": "listLoadouts",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "weaponName", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Loadouts"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Loadouts"],
+        "summary": "Créer un loadout",
+        "operationId": "createLoadout",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["weaponName", "category", "attachments"],
+                "properties": {
+                  "weaponName": { "type": "string" },
+                  "category": { "type": "string" },
+                  "attachments": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Loadout créé"
+          }
+        }
+      }
+    },
+    "/loadouts/mine": {
+      "get": {
+        "tags": ["Loadouts"],
+        "summary": "Mes loadouts personnels",
+        "operationId": "myLoadouts",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Mes loadouts"
+          }
+        }
+      }
+    },
+    "/loadouts/{id}": {
+      "get": {
+        "tags": ["Loadouts"],
+        "summary": "Détail d'un loadout",
+        "operationId": "getLoadout",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Loadout"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Loadouts"],
+        "summary": "Supprimer mon loadout",
+        "operationId": "deleteLoadout",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supprimé"
+          }
+        }
+      }
+    },
+    "/loadouts/{id}/review": {
+      "post": {
+        "tags": ["Loadouts"],
+        "summary": "Noter un loadout",
+        "operationId": "reviewLoadout",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rating"],
+                "properties": {
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "comment": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Avis ajouté"
+          }
+        }
+      }
+    },
+    "/ai/queue/join": {
+      "post": {
+        "tags": ["Matchmaking IA"],
+        "summary": "Rejoindre la file d'attente",
+        "operationId": "joinQueue",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "gameMode": {
+                    "type": "string",
+                    "enum": ["KILLRACE", "RESURGENCE", "BATTLE_ROYALE"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dans la file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "queueEntry": {
+                      "type": "object",
+                      "properties": {
+                        "userId": { "type": "string" },
+                        "pseudo": { "type": "string" },
+                        "gameMode": { "type": "string" },
+                        "rank": { "type": "string" },
+                        "status": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/queue/leave": {
+      "post": {
+        "tags": ["Matchmaking IA"],
+        "summary": "Quitter la file d'attente",
+        "operationId": "leaveQueue",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "File quittée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/queue/status": {
+      "get": {
+        "tags": ["Matchmaking IA"],
+        "summary": "Mon statut dans la file",
+        "operationId": "queueStatus",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Statut",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inQueue": { "type": "boolean" },
+                    "queueEntry": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "userId": { "type": "string" },
+                        "pseudo": { "type": "string" },
+                        "gameMode": { "type": "string" },
+                        "rank": { "type": "string" },
+                        "status": { "type": "string" },
+                        "createdAt": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/queue/count": {
+      "get": {
+        "tags": ["Matchmaking IA"],
+        "summary": "Nombre de joueurs dans la file",
+        "operationId": "queueCount",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Compteur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/queue/process": {
+      "post": {
+        "tags": ["Matchmaking IA"],
+        "summary": "Déclencher manuellement le matchmaking",
+        "operationId": "processQueue",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "gameMode": {
+                    "type": "string",
+                    "enum": ["KILLRACE", "RESURGENCE", "BATTLE_ROYALE"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matchmaking traité"
+          }
+        }
+      }
+    },
+    "/ai/suggestions": {
+      "get": {
+        "tags": ["Matchmaking IA"],
+        "summary": "Suggestions de matchs (joueurs similaires)",
+        "operationId": "getSuggestions",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 5 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "userId": { "type": "string" },
+                      "pseudo": { "type": "string" },
+                      "rank": { "type": "string" },
+                      "wins": { "type": "integer" },
+                      "losses": { "type": "integer" },
+                      "trustScore": { "type": "integer" },
+                      "avatar": { "type": "string", "nullable": true },
+                      "suggested1v1": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token JWT obtenu via /auth/login ou /auth/register"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "pseudo": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "avatar": { "type": "string", "nullable": true },
+          "xp": { "type": "integer" },
+          "rank": { "type": "string", "enum": ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER"] },
+          "coins": { "type": "integer" },
+          "wins": { "type": "integer" },
+          "losses": { "type": "integer" },
+          "totalMatches": { "type": "integer" },
+          "trustScore": { "type": "integer" },
+          "reportCount": { "type": "integer" },
+          "dailyXp": { "type": "integer" },
+          "dailyCoins": { "type": "integer" },
+          "lastDailyReset": { "type": "string", "format": "date-time" },
+          "isAdmin": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Match": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "gameMode": { "type": "string" },
+          "entryFee": { "type": "integer" },
+          "status": { "type": "string", "enum": ["WAITING", "IN_PROGRESS", "COMPLETED", "CANCELLED"] },
+          "maxPlayers": { "type": "integer" },
+          "creator": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "pseudo": { "type": "string" },
+              "avatar": { "type": "string", "nullable": true }
+            }
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "string" },
+                "pseudo": { "type": "string" },
+                "avatar": { "type": "string", "nullable": true },
+                "team": { "type": "string", "enum": ["ALPHA", "BRAVO"] },
+                "score": { "type": "integer" },
+                "kills": { "type": "integer" },
+                "position": { "type": "integer", "nullable": true },
+                "joinedAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "winner": { "type": "object", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "startedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "endedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      }
+    }
+  }
+}

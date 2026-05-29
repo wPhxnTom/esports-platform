@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  pseudo        String   @unique
+  email         String   @unique
+  password      String
+  avatar        String?
+  xp            Int      @default(0)
+  rank          String   @default("BRONZE")
+  coins         Int      @default(100)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  totalMatches  Int      @default(0)
+  trustScore    Int      @default(100)
+  reportCount   Int      @default(0)
+  dailyXp       Int      @default(0)
+  dailyCoins    Int      @default(0)
+  lastDailyReset DateTime @default(now())
+  isAdmin       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  createdMatches  Match[]            @relation("MatchCreator")
+  wonMatches      Match[]            @relation("MatchWinner")
+  participations  MatchParticipant[]
+  badges          UserBadge[]
+  notifications   Notification[]
+  leaderboard     Leaderboard?
+  reportsMade     UserReport[]       @relation("UserReportsMade")
+  reportsReceived UserReport[]       @relation("UserReportsReceived")
+  matchReportsMade MatchReport[]     @relation("MatchReportsMade")
+  matchReportsReceived MatchReport[] @relation("MatchReportsReceived")
+  verifications   MatchVerification[]
+  redemptions     Redemption[]
+  platformLinks   PlatformLink[]
+  loadouts        Loadout[]
+  loadoutReviews  LoadoutReview[]
+  topUps          TopUp[]
+}
+
+model PlatformLink {
+  id         String   @id @default(cuid())
+  userId     String
+  platform   String
+  gamertag   String
+  platformId String?
+  linkedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform])
+}
+
+model GameModeConfig {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  description String
+  rules       String?
+  minPlayers  Int      @default(1)
+  maxPlayers  Int      @default(100)
+  pointsPerKill Int    @default(10)
+  winBonus     Int     @default(50)
+  xpPerKill    Int     @default(5)
+  xpWinBonus   Int     @default(25)
+  minMatchDurationSec Int @default(60)
+
+  matches     Match[]
+  leaderboard Leaderboard[]
+}
+
+model Match {
+  id            String   @id @default(cuid())
+  gameModeId    String
+  creatorId     String
+  status        String   @default("WAITING")
+  maxPlayers    Int      @default(4)
+  winnerId      String?
+  verification  String   @default("NONE")
+  flagged       Boolean  @default(false)
+  flagReason    String?
+  createdAt     DateTime @default(now())
+  startedAt     DateTime?
+  endedAt       DateTime?
+
+  gameMode     GameModeConfig     @relation(fields: [gameModeId], references: [id])
+  creator      User               @relation("MatchCreator", fields: [creatorId], references: [id])
+  winner       User?              @relation("MatchWinner", fields: [winnerId], references: [id])
+  participants MatchParticipant[]
+  verifications MatchVerification[]
+  reports      MatchReport[]
+}
+
+model MatchParticipant {
+  id            String   @id @default(cuid())
+  matchId       String
+  userId        String
+  team          String?  @default("ALPHA")
+  score         Int      @default(0)
+  kills         Int      @default(0)
+  deaths        Int      @default(0)
+  position      Int?
+  confirmed     Boolean  @default(false)
+  proofUrl      String?
+  joinedAt      DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([matchId, userId])
+}
+
+model MatchVerification {
+  id        String   @id @default(cuid())
+  matchId   String
+  userId    String
+  proofUrl  String
+  notes     String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model MatchReport {
+  id          String   @id @default(cuid())
+  matchId     String
+  reporterId  String
+  targetId    String
+  reason      String
+  description String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  match    Match @relation(fields: [matchId], references: [id])
+  reporter User  @relation("MatchReportsMade", fields: [reporterId], references: [id])
+  target   User  @relation("MatchReportsReceived", fields: [targetId], references: [id])
+}
+
+model UserReport {
+  id          String   @id @default(cuid())
+  reporterId  String
+  targetId    String
+  reason      String
+  description String?
+  matchId     String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  reporter User @relation("UserReportsMade", fields: [reporterId], references: [id])
+  target   User @relation("UserReportsReceived", fields: [targetId], references: [id])
+}
+
+model Leaderboard {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  gameModeId  String
+  score       Int      @default(0)
+  rank        Int
+  updatedAt   DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id])
+  gameMode GameModeConfig  @relation(fields: [gameModeId], references: [id])
+}
+
+model Badge {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String
+  imageUrl    String
+  condition   String?
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model GiftCard {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String
+  cost        Int
+  provider    String
+  imageUrl    String?
+  active      Boolean  @default(true)
+  stock       Int      @default(999)
+  createdAt   DateTime @default(now())
+
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id         String   @id @default(cuid())
+  userId     String
+  giftCardId String
+  coinsSpent Int
+  status     String   @default("PENDING")
+  redeemedAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  giftCard GiftCard @relation(fields: [giftCardId], references: [id])
+}
+
+model Loadout {
+  id          String   @id @default(cuid())
+  userId      String
+  weaponName  String
+  category    String
+  description String?
+  attachments String
+  avgRating   Float    @default(0)
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id])
+  reviews LoadoutReview[]
+
+  @@index([weaponName])
+  @@index([category])
+}
+
+model LoadoutReview {
+  id        String   @id @default(cuid())
+  loadoutId String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  loadout Loadout @relation(fields: [loadoutId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([loadoutId, userId])
+}
+
+model TopUp {
+  id            String   @id @default(cuid())
+  userId        String
+  coins         Int
+  paymentAmount Float
+  paymentMethod String   @default("MANUAL")
+  status        String   @default("PENDING")
+  stripeSessionId String? @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model EarlyAccessKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  used      Boolean  @default(false)
+  usedBy    String?
+  maxUses   Int      @default(1)
+  useCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model MatchmakingQueue {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  pseudo    String
+  gameMode  String
+  rank      String   @default("BRONZE")
+  trustScore Int     @default(100)
+  status    String   @default("WAITING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

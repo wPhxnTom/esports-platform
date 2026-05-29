@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "PhxntomES",
+    "slug": "phxntomes",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "phxntomes",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "assets": [
+      "./assets/images"
+    ],
+    "splash": {
+      "backgroundColor": "#0a0a1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.phxntomes.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a1a"
+      },
+      "package": "com.phxntomes.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#0a0a1a",
+      "scope": "/",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait",
+      "lang": "en",
+      "description": "Compete in epic esports battles. Killrace, Resurgence & Battle Royale.",
+      "shortName": "PhxntomES",
+      "themeColor": "#7c3aed",
+      "preferRelatedApplications": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 14.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "buildConfig": {
+          "nonExemptEncryption": false
+        }
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "buildConfig": {
+          "nonExemptEncryption": false
+        }
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
